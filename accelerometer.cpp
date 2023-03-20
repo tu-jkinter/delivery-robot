@@ -3,6 +3,10 @@
 
 // serial baud rate must be 115200
 
+void InitAccelerometer(){
+  Serial2.begin(115200);
+}
+
 float xAcc(){
   return (float)JY901.stcAcc.a[0]/32768*16;
 }

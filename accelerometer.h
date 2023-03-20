@@ -1,3 +1,5 @@
+void initAcceleromemter();
+
 float xAcc();
 
 float yAcc();
