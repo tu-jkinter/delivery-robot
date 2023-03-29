@@ -28,7 +28,7 @@ class Accelerometer {
   
   public: 
 
-    JY901 conn;
+    JY901 Connection;
 
     // serial baud rate must be 115200
     void Initialize() {
@@ -72,7 +72,7 @@ class Accelerometer {
     void UpdateValues() {
         while (Serial2.available()) 
         {
-          conn.CopeSerialData(Serial2.read()); //Call JY901 data cope function
+          Connection.CopeSerialData(Serial2.read()); //Call JY901 data cope function
         }
     }
 
@@ -82,41 +82,41 @@ class Accelerometer {
 
     // collect acceleration data
     float xAcc(){
-      return (float)conn.stcAcc.a[0] / 32768 * 16;
+      return (float)Connection.stcAcc.a[0] / 32768 * 16;
     }
 
     float yAcc(){
-      return (float)conn.stcAcc.a[1] / 32768 * 16;
+      return (float)Connection.stcAcc.a[1] / 32768 * 16;
     }
 
     float zAcc(){
-      return (float)conn.stcAcc.a[2] / 32768 * 16;
+      return (float)Connection.stcAcc.a[2] / 32768 * 16;
     }
 
     // collect gyroscope acceleration data
     float xGyro(){
-      return (float)conn.stcGyro.w[0] / 32768 * 2000;
+      return (float)Connection.stcGyro.w[0] / 32768 * 2000;
     }
 
     float yGyro(){
-      return (float)conn.stcGyro.w[1] / 32768 * 2000;
+      return (float)Connection.stcGyro.w[1] / 32768 * 2000;
     }
 
     float zGyro(){
-      return (float)conn.stcGyro.w[2] / 32768 * 2000;
+      return (float)Connection.stcGyro.w[2] / 32768 * 2000;
     }
 
     // collect angle data
     float xAngle(){
-      return (float)conn.stcAngle.Angle[0] / 32768 * 180;
+      return (float)Connection.stcAngle.Angle[0] / 32768 * 180;
     }
 
     float yAngle(){
-      return (float)conn.stcAngle.Angle[1] / 32768 * 180;
+      return (float)Connection.stcAngle.Angle[1] / 32768 * 180;
     }
 
     float zAngle(){
-      return (float)conn.stcAngle.Angle[2] / 32768 * 180;
+      return (float)Connection.stcAngle.Angle[2] / 32768 * 180;
     }
 };
 
