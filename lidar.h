@@ -6,11 +6,6 @@ uint8_t request_data[5] = {0x5A, 0X05, 0X00, 0X01, 0X60};
 // stores data pulled from lidar
 uint8_t data_frame[9];
 
-uint16_t distance;
-uint16_t strength;
-uint16_t temperature;
-uint8_t i2c_address;
-
 class Lidar{
 public:
 // save the i2c address of the lidar
@@ -55,6 +50,12 @@ uint16_t getTemperature(){
 
 
 private:
+
+uint16_t distance;
+uint16_t strength;
+uint16_t temperature;
+uint8_t i2c_address;
+
 uint8_t checksum(){
 	uint8_t sum = 0;
 	for(uint8_t i = 0; i < 9; i++){
