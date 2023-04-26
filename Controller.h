@@ -173,13 +173,10 @@ class Controller {
 
     //Move the robot forward a specified distance (in inches).
     void Forward(int speed, int distance) {
-      
-      float modifier = (distance >= 4) ? 1.5 * 80 : 0;
 
       //750 pulses per motor rotation
-      //This converts to roughly 80 pulses for every 1 inch of motion
-      //ditance is measured in inches in this API
-      double pulseTarget = (distance * 80) - modifier;
+      //This converts to roughly 30 pulses for every 1 cm of motion
+      double pulseTarget = (distance * 30);
       int pulseCount = 0;
 
       bool isCompleted = false;
@@ -191,7 +188,6 @@ class Controller {
 
       while (!isCompleted)
       {
-        //Calculate average of all four motors 
         UpdateMotorEncoders();
         
         pulseCount = MotorA.Encoder.Count;
@@ -208,12 +204,9 @@ class Controller {
 
     void Reverse(int speed, int distance) {
 
-      float modifier = (distance >= 4) ? 1.5 * 80 : 0;
-
       //750 pulses per motor rotation
-      //This converts to roughly 80 pulses for every 1 inch of motion
-      //ditance is measured in inches in this API
-      double pulseTarget = (distance * 80) - modifier;
+      //This converts to roughly 30 pulses for every 1 cm of motion
+      double pulseTarget = (distance * 30);
       int pulseCount = 0;
 
       bool isCompleted = false;
@@ -225,7 +218,6 @@ class Controller {
 
       while (!isCompleted)
       {
-        //Calculate average of all four motors 
         UpdateMotorEncoders();
         
         pulseCount = abs(MotorA.Encoder.Count);
@@ -323,6 +315,37 @@ class Controller {
                 Forward(speed);
                 break;
         }
+    }
+
+    void Shift(int speed, int direction, int distance) {
+
+      double pulseTarget = (distance * 30);
+      int pulseCount = 0;
+
+      bool isCompleted = false;
+
+      ResetMotorEncoders();
+
+      //If moving forward or reverse, adjust speed
+      if (direction == 0 || direction == 4) {
+        speed = 50;
+      }
+      
+      //Begin moving
+      Shift(speed, direction);
+
+       while (!isCompleted) {
+
+        UpdateMotorEncoders();
+        pulseCount = abs(MotorA.Encoder.Count);
+
+        if (pulseCount >= pulseTarget) {
+          Stop();
+          isCompleted = true;
+        }
+      }
+
+      ResetMotorEncoders();
     }
 
     //Arc the robot in the designated direction using its back as the axis of rotation.
