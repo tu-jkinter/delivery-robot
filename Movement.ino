@@ -5,14 +5,25 @@
 
 #include "Controller.h"
 #include "Accelerometer.h"
-#include "Convert.h"
 #include "Encoder.h"
 #include "Bluetooth.h"
+#include "Lidar.h"
 #include <Arduino.h>
 
-Bluetooth bluetooth;
+//Class instances
+Bluetooth Bluetooth;
 Controller Control;
-Convert convert;
+Lidar FrontLidar;
+Lidar BackLidar;
+
+//Global properties
+bool isManualMode = true;
+int manualSpeed = 75;
+
+struct RotateData {
+  float Angle; 
+  int Distance;
+};
 
 void setup() {
     
@@ -22,15 +33,103 @@ void setup() {
     //Initialize robot control
     Control.Initialize();
     Control.Stop();
+
+    //Initialize LiDAR
+    Wire.begin();
+    FrontLidar.Initialize(0x10);
+    BackLidar.Initialize(0x09);
 }
 
 
 void loop() {
-  char data = bluetooth.Update();
-  SetManualControl(data);
-  delay(30);
+
+  //Update front lidar data
+  LidarData frontData = FrontLidar.Fetch();
+  LidarData backData = BackLidar.Fetch();
+
+  //Update bluetooh data
+  char data = Bluetooth.Update();
+
+  //If START is pressed (Z) on remote, switch manual trigger.
+  if (data == 'Z') {
+    isManualMode = !isManualMode;
+  }
+
+  if (isManualMode) {
+
+    if (data == 'X') {
+      UpdateSpeed(manualSpeed + 5);
+    }
+    else if (data == 'Y') {
+      UpdateSpeed(manualSpeed - 5);
+    }
+
+    SetManualControl(data, frontData, backData); 
+  }
+  else {
+    if (frontData.Distance <= 30) {
+      Control.Reverse(50, 30 - frontData.Distance);
+      RotateData target = FindNewDirection();
+
+      float difference = target.Angle - Control.Accelerometer.GetAngle().Z;
+
+      if (difference > 0) {
+        Control.Rotate(60, true, difference);
+      }
+      else {
+        Control.Rotate(60, false, abs(difference));
+      }
+    }
+    else {
+      Control.Forward(50);
+    }
+  }
 }
 
+void UpdateSpeed(int speed) {
+
+  if (speed < 50) {
+    speed = 50;
+  }
+
+  if (speed > 150) {
+    speed = 150;
+  }
+
+  manualSpeed = speed;
+}
+
+RotateData FindNewDirection() {
+
+  RotateData data[36];
+
+  for (int i = 0; i < 18; i++)
+  {
+    Control.Rotate(50, true, 10);
+
+    //Capture lidar data
+    LidarData frontData = FrontLidar.Fetch();
+    LidarData backData = BackLidar.Fetch();
+
+    //Obtain distance for front and back lidars
+    data[i].Distance = frontData.Distance;
+    data[i+18].Distance = backData.Distance;
+
+    //Obtain angle for front and back lidars
+    data[i].Angle = Control.Accelerometer.GetAngle().Z;
+    data[i+18].Angle = data[i].Angle + 180;
+  }
+
+  RotateData target = {0, 0};
+
+  for (int i = 0; i < 36; i++) {
+    if (data[i].Distance > target.Distance) {
+      target = data[i];
+    }
+  }
+
+  return target;
+}
 
 //Serial event to read in Accelerometer data
 void serialEvent2() {
@@ -41,56 +140,75 @@ void serialEvent2() {
 }
 
 //Use the bluetooth data to process manual robot movement
-void SetManualControl(char data) {
+void SetManualControl(char data, LidarData frontData, LidarData backData) {
 
   switch (data) {
 
     case 'A': 
-      Control.Forward(100);
+    {
+      if (frontData.Distance <= 30) {
+        Control.Reverse(75);
+      }
+      else if (frontData.Distance > 30 && frontData.Distance <= 100) {
+        Control.Forward(50);
+      }
+      else {
+        Control.Forward(manualSpeed);
+      }
       break;
+    }
 
     case 'B': 
-      Control.Reverse(100);
+
+      if (backData.Distance <= 30) {
+        Control.Forward(75);
+      }
+      else if (backData.Distance > 30 && backData.Distance <= 100) {
+        Control.Reverse(50);
+      }
+      else {
+        Control.Reverse(manualSpeed);
+      }
       break;
 
     case 'C': 
-      Control.Shift(130, 2);
+      Control.Shift(manualSpeed + 75, 2);
       break;
 
     case 'D': 
-      Control.Shift(130, 6);
+      Control.Shift(manualSpeed + 75, 6);
       break;
 
     case 'E': 
-      Control.Shift(130, 1);
+      Control.Shift(manualSpeed + 75, 1);
       break;
 
     case 'F': 
-      Control.Shift(130, 7);
+      Control.Shift(manualSpeed + 75, 7);
       break;
 
     case 'G': 
-      Control.Shift(130, 3);
+      Control.Shift(manualSpeed + 75, 3);
       break;
 
     case 'H': 
-      Control.Shift(130, 5);
+      Control.Shift(manualSpeed + 75, 5);
       break;
 
     case 'I': 
-      Control.Rotate(100, true);
+      Control.Rotate(manualSpeed + 25, true);
       break;
 
     case 'J': 
-      Control.Rotate(100, false);
+      Control.Rotate(manualSpeed + 25, false);
       break;
 
     case 'K': 
-      Control.Arc(125, true);
+      Control.Arc(manualSpeed + 25, true);
       break;
 
     case 'L': 
-      Control.Arc(125, false);
+      Control.Arc(manualSpeed + 25, false);
       break;
     
     case 'M': 
@@ -99,6 +217,42 @@ void SetManualControl(char data) {
 
     case 'N': 
       Control.Stop();
+      break;
+
+    case 'O':
+      if (frontData.Distance <= 30) {
+        Control.Reverse(75);
+      }
+      else {
+         Control.Turn(true, true, manualSpeed);
+      }
+      break;
+    
+    case 'P':
+      if (frontData.Distance <= 30) {
+        Control.Reverse(75);
+      }
+      else {
+         Control.Turn(true, false, manualSpeed);
+      }
+      break;
+
+    case 'Q':
+      if (backData.Distance <= 30) {
+        Control.Reverse(75);
+      }
+      else {
+         Control.Turn(false, true, manualSpeed);
+      }
+      break;
+
+    case 'R':
+      if (backData.Distance <= 30) {
+        Control.Reverse(75);
+      }
+      else {
+         Control.Turn(false, false, manualSpeed);
+      }
       break;
 
     default: 

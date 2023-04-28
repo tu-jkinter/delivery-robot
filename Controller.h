@@ -244,10 +244,10 @@ class Controller {
 
     void Rotate(int speed, bool clockwise, float angle) {
         
-        //Limit rotation to 180% turns
-        if (angle >= 180)
+        //Limit rotation
+        if (angle >= 360)
         {
-          angle = 179;
+          angle = 359;
         }
 
         Accelerometer.Flush();
@@ -355,6 +355,48 @@ class Controller {
         } else {
             ArcLeft(speed);
         }
+    }
+
+    void Turn(bool isForward, bool isClockwise, int speed) {
+
+      if (speed < 100) {
+        speed = 100;
+      }
+
+      if (speed > 150) {
+        speed = 150;
+      }
+
+      int halfSpeed = speed / 2;
+      
+      if (isForward) {
+        if (isClockwise) {
+          MotorA.Rotate(speed, true);
+          MotorB.Rotate(halfSpeed, true);
+          MotorC.Rotate(speed, true);
+          MotorD.Rotate(halfSpeed, true);
+        }
+        else {
+          MotorA.Rotate(halfSpeed, true);
+          MotorB.Rotate(speed, true);
+          MotorC.Rotate(halfSpeed, true);
+          MotorD.Rotate(speed, true);
+        }
+      }
+      else {
+        if (isClockwise) {
+          MotorA.Rotate(speed, false);
+          MotorB.Rotate(halfSpeed, false);
+          MotorC.Rotate(speed, false);
+          MotorD.Rotate(halfSpeed, false);
+        }
+        else {
+          MotorA.Rotate(halfSpeed, false);
+          MotorB.Rotate(speed, false);
+          MotorC.Rotate(halfSpeed, false);
+          MotorD.Rotate(speed, false);
+        }
+      }
     }
 };
 

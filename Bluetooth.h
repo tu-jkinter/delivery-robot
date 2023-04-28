@@ -13,13 +13,13 @@ class Bluetooth {
     char buffUART[MAX_PACKETSIZE];
     unsigned int buffUARTIndex = 0; 
     unsigned long preUARTTick = 0;
-    char OldStatus = '0';
 
   public: 
     
     //Acquire the most recently received bluetooth module data as a single character.
     char Update() {
-
+      
+      delay(30); //IMPORTANT - DONT DELETE THIS
       char UARTData = 0;
 
       if (Serial1.available()) {
